@@ -1,2 +1,2 @@
-\# Video-Relighting-CG
+# Video-Relighting-CG
 
