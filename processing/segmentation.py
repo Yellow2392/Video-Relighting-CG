@@ -25,21 +25,29 @@ def process_video():
         
         # Create mask for green pixels
         mask = cv2.inRange(hsv, lower_green, upper_green)
-        
-        # Clean up mask
-        kernel = np.ones((5, 5), np.uint8)
-        mask = cv2.erode(mask, kernel, iterations=1)
-        mask = cv2.dilate(mask, kernel, iterations=2)
-        
-        # Invert mask for foreground
-        mask_inv = cv2.bitwise_not(mask)
-        
-        # Extract foreground and background
-        fg = cv2.bitwise_and(frame, frame, mask=mask_inv)
-        bg = cv2.bitwise_and(background, background, mask=mask)
-        
-        # Combine foreground and background
-        result = cv2.add(fg, bg)
+
+        # Clean up mask with morphological closing (rellena huecos sin generar bloques)
+        close_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, close_kernel, iterations=2)
+
+        # Kernel más pequeño para el open: solo quita ruido de 1-2 píxeles sueltos,
+        # sin borrar franjas delgadas de verde detectado entre los dedos
+        open_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, open_kernel, iterations=1)
+
+        # Suavizar bordes: pasa la máscara binaria a un degradado 0-255
+        # en vez de un corte duro, para eliminar el efecto "dientes de sierra"
+        mask = cv2.GaussianBlur(mask, (7, 7), 0)
+
+        # Normalizar a alpha [0,1] float, con 3 canales para poder multiplicar la imagen a color
+        alpha = mask.astype(np.float32) / 255.0
+        alpha = cv2.merge([alpha, alpha, alpha])
+
+        # Blending: mezcla proporcional en vez de "todo o nada"
+        fg = frame.astype(np.float32)
+        bg = background.astype(np.float32)
+        result = fg * (1 - alpha) + bg * alpha
+        result = result.astype(np.uint8)
         
         # Display result
         cv2.imshow('Green Screen', result)
