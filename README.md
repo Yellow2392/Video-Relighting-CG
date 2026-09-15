@@ -1,6 +1,6 @@
 # Video-Relighting-CG
 
-Proyecto orientado a la **inserción realista de una persona en un escenario diferente**, mediante segmentación por green-screen, análisis de iluminación y *relighting*.
+Proyecto orientado a la **inserción realista de una persona en un escenario diferente**, mediante segmentación por green-screen, análisis de iluminación y relighting.
 
 ## Pipeline
 
